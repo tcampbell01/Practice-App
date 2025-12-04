@@ -1,21 +1,32 @@
 // src/app/page.js
 import BookList from './BookList';
+import { supabase } from '../lib/supabaseClient';
 
-const demoBooks = [
-  { id: 1, title: 'Suzuki Violin Book 1', instrument: 'Violin', level: 'Beginner' },
-  { id: 2, title: 'Suzuki Violin Book 2', instrument: 'Violin', level: 'Early Intermediate' },
-  { id: 3, title: 'Essential Elements Book 1', instrument: 'Violin', level: 'Beginner' },
-];
+export default async function Home() {
+  // Ask Supabase for all method_books
+  const { data: books, error } = await supabase
+    .from('method_books')
+    .select('id, title, instrument, level')
+    .order('created_at', { ascending: true });
 
-export default function HomePage() {
+  if (error) {
+    console.error('Error fetching books:', error.message);
+  }
+
   return (
-    <main style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif' }}>
-      <h1>Practice App (Home)</h1>
-      <p>Welcome! This is the home page of your practice app.</p>
+    <main style={{ padding: '2rem' }}>
+      <h1>Practice App</h1>
+      <p>These books are coming from Supabase now.</p>
 
-      {/* Here we "pass props" into BookList */}
-      <BookList title="My Method Books (demo)" books={demoBooks} />
+      {error && (
+        <p style={{ color: 'red' }}>
+          There was a problem loading books. Check the console.
+        </p>
+      )}
+
+      <section style={{ marginTop: '2rem' }}>
+        <BookList books={books ?? []} />
+      </section>
     </main>
   );
 }
-

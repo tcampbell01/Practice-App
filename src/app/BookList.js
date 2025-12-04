@@ -1,25 +1,22 @@
 // src/app/BookList.js
 
-// "props" is an object that holds whatever you pass into <BookList ... />
-// Here we pull out `title` and `books` from that object.
-export default function BookList({ title, books }) {
+// This component *only* cares about the books it is given via props.
+export default function BookList({ books, title = 'My Method Books' }) {
   return (
-    <section style={{ marginTop: '2rem' }}>
-      {/* If a title was passed in, show it */}
-      {title && <h2>{title}</h2>}
-
-      {/* If there are books, render the list; otherwise show a fallback message */}
-      {books && books.length > 0 ? (
+    <div>
+      <h2>{title}</h2>
+      {books.length === 0 ? (
+        <p>No books found.</p>
+      ) : (
         <ul>
           {books.map((book) => (
             <li key={book.id}>
-              <strong>{book.title}</strong> – {book.instrument} – {book.level}
+              <strong>{book.title}</strong> – {book.instrument || 'Instrument?'} –{' '}
+              {book.level || 'Level?'}
             </li>
           ))}
         </ul>
-      ) : (
-        <p>No books to display yet.</p>
       )}
-    </section>
+    </div>
   );
 }
