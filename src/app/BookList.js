@@ -1,5 +1,7 @@
 // src/app/BookList.js
 
+//reuseable UI component
+
 // This component *only* cares about the books it is given via props.
 export default function BookList({ books, title = 'My Method Books' }) {
   return (

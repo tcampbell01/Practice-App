@@ -1,32 +1,34 @@
+//homepage
+
 // src/app/page.js
-import BookList from './BookList';
-import { supabase } from '../lib/supabaseClient';
+import Link from "next/link";
 
-export default async function Home() {
-  // Ask Supabase for all method_books
-  const { data: books, error } = await supabase
-    .from('method_books')
-    .select('id, title, instrument, level')
-    .order('created_at', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching books:', error.message);
-  }
-
+export default function HomePage() {
   return (
-    <main style={{ padding: '2rem' }}>
+    <main style={{ padding: "2rem" }}>
       <h1>Practice App</h1>
-      <p>These books are coming from Supabase now.</p>
+      <p>
+        This is the home page of your music practice app. Start by viewing your
+        method books.
+      </p>
 
-      {error && (
-        <p style={{ color: 'red' }}>
-          There was a problem loading books. Check the console.
-        </p>
-      )}
-
-      <section style={{ marginTop: '2rem' }}>
-        <BookList books={books ?? []} />
-      </section>
+      <p style={{ marginTop: "1.5rem" }}>
+        <Link href="/books">
+          {/* simple inline styling so you don’t need Tailwind yet */}
+          <button
+            style={{
+              padding: "0.5rem 1rem",
+              borderRadius: "4px",
+              border: "none",
+              backgroundColor: "#2563eb",
+              color: "white",
+              cursor: "pointer",
+            }}
+          >
+            Go to My Method Books
+          </button>
+        </Link>
+      </p>
     </main>
   );
 }
