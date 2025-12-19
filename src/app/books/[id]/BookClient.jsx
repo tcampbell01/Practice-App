@@ -2,47 +2,71 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
 
 export default function BookClient({ initialBook }) {
   const router = useRouter();
 
-  const [title, setTitle] = useState(initialBook.title ?? "");
-  const [level, setLevel] = useState(initialBook.level ?? "");
-  const [instrument, setInstrument] = useState(initialBook.instrument ?? "");
+  const [title, setTitle] = useState(initialBook?.title ?? "");
+  const [level, setLevel] = useState(initialBook?.level ?? "");
+  const [instrument, setInstrument] = useState(initialBook?.instrument ?? "");
+  const [weeklyGoalMinutes, setWeeklyGoalMinutes] = useState(
+    initialBook?.weekly_goal_minutes ?? ""
+  );
 
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState("");
-  const [savedMsg, setSavedMsg] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const canSave = useMemo(() => title.trim().length > 0, [title]);
+  const bookId = initialBook?.id;
+
+  const payload = useMemo(() => {
+    const goal =
+      weeklyGoalMinutes === "" || weeklyGoalMinutes == null
+        ? null
+        : Number(weeklyGoalMinutes);
+
+    return {
+      title: title.trim(),
+      level: level.trim(),
+      instrument: instrument.trim(),
+      weekly_goal_minutes: goal,
+    };
+  }, [title, level, instrument, weeklyGoalMinutes]);
+
+  function validate() {
+    if (!payload.title) return "Title is required";
+
+    const g = payload.weekly_goal_minutes;
+    if (g != null && (!Number.isFinite(g) || g < 0)) {
+      return "Weekly goal must be a number ≥ 0";
+    }
+    return "";
+  }
 
   async function handleSave(e) {
     e.preventDefault();
     setError("");
-    setSavedMsg("");
+    setSuccess("");
 
-    if (!canSave) {
-      setError("Title is required.");
+    const msg = validate();
+    if (msg) {
+      setError(msg);
       return;
     }
 
     setIsSaving(true);
     try {
-      const res = await fetch(`/api/books/${initialBook.id}`, {
+      const res = await fetch(`/api/books/${bookId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          level: level.trim(),
-          instrument: instrument.trim(),
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        let msg = "Failed to update book";
+        let msg = "Failed to save book";
         try {
           const data = await res.json();
           if (data?.error) msg = data.error;
@@ -51,10 +75,11 @@ export default function BookClient({ initialBook }) {
         return;
       }
 
-      setSavedMsg("Saved!");
-      router.refresh(); // refresh server-rendered bits if any
+      setSuccess("Saved!");
+      // Refresh server components + re-fetch book data
+      router.refresh();
     } catch {
-      setError("Network error updating book");
+      setError("Network error saving book");
     } finally {
       setIsSaving(false);
     }
@@ -62,18 +87,16 @@ export default function BookClient({ initialBook }) {
 
   async function handleDelete() {
     const ok = window.confirm(
-      `Delete "${initialBook.title}"?\n\nThis cannot be undone.`
+      `Delete "${initialBook?.title || "this book"}"? This cannot be undone.`
     );
     if (!ok) return;
 
     setError("");
-    setSavedMsg("");
+    setSuccess("");
     setIsDeleting(true);
 
     try {
-      const res = await fetch(`/api/books/${initialBook.id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/books/${bookId}`, { method: "DELETE" });
 
       if (!res.ok) {
         let msg = "Failed to delete book";
@@ -95,11 +118,11 @@ export default function BookClient({ initialBook }) {
   }
 
   return (
-    <section style={{ marginTop: "1.5rem" }}>
+    <section style={{ marginTop: "2rem" }}>
       <h2>Edit Book</h2>
 
       {error && <p style={{ color: "crimson" }}>{error}</p>}
-      {savedMsg && <p style={{ color: "green" }}>{savedMsg}</p>}
+      {success && <p style={{ color: "green" }}>{success}</p>}
 
       <form onSubmit={handleSave} style={{ display: "grid", gap: "0.75rem" }}>
         <div>
@@ -117,15 +140,25 @@ export default function BookClient({ initialBook }) {
           <input value={instrument} onChange={(e) => setInstrument(e.target.value)} />
         </div>
 
-        <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem" }}>
-          <button type="submit" disabled={isSaving || !canSave}>
+        <div>
+          <label>Weekly goal (minutes): </label>
+          <input
+            value={weeklyGoalMinutes}
+            onChange={(e) => setWeeklyGoalMinutes(e.target.value)}
+            inputMode="numeric"
+            placeholder="e.g. 150"
+          />
+        </div>
+
+        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+          <button type="submit" disabled={isSaving || isDeleting}>
             {isSaving ? "Saving…" : "Save Changes"}
           </button>
 
           <button
             type="button"
             onClick={handleDelete}
-            disabled={isDeleting}
+            disabled={isSaving || isDeleting}
             style={{ color: "crimson" }}
           >
             {isDeleting ? "Deleting…" : "Delete Book"}
