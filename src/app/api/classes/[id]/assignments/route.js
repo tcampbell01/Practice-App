@@ -15,7 +15,9 @@ export async function GET(_request, { params }) {
     );
   }
 
-  const classId = params?.id;
+  const { id } = await params;
+  const classId = id;
+  
   if (!classId) {
     return NextResponse.json({ error: "classId is required" }, { status: 400 });
   }

@@ -1,6 +1,8 @@
 import ClassAssignmentsPage from "@/components/assignments/ClassAssignmentsPage";
 
-export default function Page({ params }) {
-  return <ClassAssignmentsPage classId={params.id} />;
+export default async function Page({ params }) {
+  const { id } = await params;
+  return <ClassAssignmentsPage classId={id} />;
 }
+
 
